@@ -1,14 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "EnhancedInputComponent.h"
-#include "MD_PlayerCharacter.h"
-#include "InputMappingContext.h"
-#include "InputActionValue.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Camera/CameraComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Engine/LocalPlayer.h"
+
+#include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
+#include "MD_PlayerCharacter.h"
+#include "Camera/CameraComponent.h"
+
 
 // Sets default values
 AMD_PlayerCharacter::AMD_PlayerCharacter()
@@ -49,9 +49,9 @@ AMD_PlayerCharacter::AMD_PlayerCharacter()
 void AMD_PlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+	CachedPlayerController = Cast<APlayerController>(GetController());
+
+	ULocalPlayer* LocalPlayer = CachedPlayerController->GetLocalPlayer();
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer);
 	Subsystem->AddMappingContext(DefaultMappingContext, 0);
 }
@@ -70,6 +70,7 @@ void AMD_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMD_PlayerCharacter::Move);
 	EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMD_PlayerCharacter::Look);
+	EnhancedInput->BindAction(MenuAction, ETriggerEvent::Started, this, &AMD_PlayerCharacter::ToggleEscapeMenu);
 }
 
 void AMD_PlayerCharacter::Move(const FInputActionValue& Value)
@@ -91,4 +92,9 @@ void AMD_PlayerCharacter::Look(const FInputActionValue& Value)
 	
 	AddControllerYawInput(LookAxisVector.X);
 	AddControllerPitchInput(LookAxisVector.Y);
+}
+
+void AMD_PlayerCharacter::ToggleEscapeMenu()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Open Menu"));
 }

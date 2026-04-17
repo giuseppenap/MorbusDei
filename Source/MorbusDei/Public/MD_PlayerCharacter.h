@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Blueprint/UserWidget.h"
 #include "MD_PlayerCharacter.generated.h"
 
 class UInputAction;
@@ -31,6 +32,10 @@ public:
 	virtual void BeginPlay() override;
 
 protected:
+
+	UPROPERTY()
+	APlayerController* CachedPlayerController = nullptr;
+	
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComp;
 	
@@ -46,6 +51,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	UInputAction* LookAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UInputAction* MenuAction;
+
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	void ToggleEscapeMenu();
+
+	
 };
