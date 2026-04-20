@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "MD_PlayerCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-#include "MD_PlayerCharacter.h"
 #include "Camera/CameraComponent.h"
 
 
@@ -97,4 +97,23 @@ void AMD_PlayerCharacter::Look(const FInputActionValue& Value)
 void AMD_PlayerCharacter::ToggleEscapeMenu()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Open Menu"));
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+
+	if (PauseMenuWidgetClass && !PauseMenuWidget)
+	{
+		PauseMenuWidget = CreateWidget<UUserWidget>(PC, PauseMenuWidgetClass);
+	}
+
+	if (PauseMenuWidget)
+	{
+		PauseMenuWidget->AddToViewport();
+
+		FInputModeUIOnly InputMode;
+		InputMode.SetWidgetToFocus(PauseMenuWidget->TakeWidget());
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+		PC->SetInputMode(InputMode);
+		PC->bShowMouseCursor = true;
+	}
 }

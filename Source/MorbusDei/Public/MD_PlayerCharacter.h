@@ -14,6 +14,8 @@ class UEnhancedInputComponent;
 class UCameraComponent;
 class USpringArmComponent;
 
+class UUserWidget;
+
 
 
 UCLASS()
@@ -30,6 +32,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> PauseMenuWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* PauseMenuWidget;
 
 protected:
 
