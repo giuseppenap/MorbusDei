@@ -9,6 +9,8 @@
 
 #include "Camera/CameraComponent.h"
 
+#include "MD_InteractInterface.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 AMD_PlayerCharacter::AMD_PlayerCharacter()
@@ -39,10 +41,10 @@ AMD_PlayerCharacter::AMD_PlayerCharacter()
 	SpringArmComp->CameraRotationLagSpeed = 12.f;
 
 	
-	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
-	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
-	CameraComp->bUsePawnControlRotation = false;
-	CameraComp->FieldOfView = 66.f;
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
+	CameraComponent->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
+	CameraComponent->bUsePawnControlRotation = false;
+	CameraComponent->FieldOfView = 66.f;
 }
 
 // Called when the game starts or when spawned
@@ -71,6 +73,7 @@ void AMD_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMD_PlayerCharacter::Move);
 	EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMD_PlayerCharacter::Look);
 	EnhancedInput->BindAction(MenuAction, ETriggerEvent::Started, this, &AMD_PlayerCharacter::ToggleEscapeMenu);
+	EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &AMD_PlayerCharacter::HandleInteract);
 }
 
 void AMD_PlayerCharacter::Move(const FInputActionValue& Value)
@@ -115,5 +118,54 @@ void AMD_PlayerCharacter::ToggleEscapeMenu()
 
 		PC->SetInputMode(InputMode);
 		PC->bShowMouseCursor = true;
+	}
+}
+
+void AMD_PlayerCharacter::HandleInteract()
+{
+	FVector Start;
+	FRotator ViewRotation;
+
+	Controller->GetPlayerViewPoint(Start, ViewRotation);
+
+	const FVector End = Start + (ViewRotation.Vector() * InteractDistance);
+
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	const bool bHit = GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		Start,
+		End,
+		ECC_Visibility,
+		Params
+	);
+
+	DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 1.0f, 0, 1.5f);
+
+	if (!bHit || !Hit.GetActor())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Interact trace hit nothing"));
+		return;
+	}
+
+	AActor* HitActor = Hit.GetActor();
+	UE_LOG(LogTemp, Warning, TEXT("Interact trace hit: %s"), *GetNameSafe(HitActor));
+
+	if (!HitActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit result had no valid actor"));
+		return;
+	}
+	
+	if (HitActor->Implements<UMD_InteractInterface>())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s is interactable"), *GetNameSafe(HitActor));
+		IMD_InteractInterface::Execute_Interact(HitActor, this);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s is NOT interactable"), *GetNameSafe(HitActor));
 	}
 }

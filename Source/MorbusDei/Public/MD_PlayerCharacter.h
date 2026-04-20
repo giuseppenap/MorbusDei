@@ -16,6 +16,8 @@ class USpringArmComponent;
 
 class UUserWidget;
 
+struct FInputActionValue;
+
 
 
 UCLASS()
@@ -46,7 +48,7 @@ protected:
 	APlayerController* CachedPlayerController = nullptr;
 	
 	UPROPERTY(VisibleAnywhere)
-	UCameraComponent* CameraComp;
+	UCameraComponent* CameraComponent;
 	
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArmComp;
@@ -63,9 +65,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
 	UInputAction* MenuAction;
 
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* InteractAction;
+
+	UPROPERTY(EditAnywhere, Category="Interaction")
+	float InteractDistance = 500.0f;
+
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void ToggleEscapeMenu();
-
+	void HandleInteract();
 	
 };
