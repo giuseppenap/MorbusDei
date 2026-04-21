@@ -139,6 +139,7 @@ void AMD_PlayerCharacter::ClearInteractionFocus()
 		CurrentFocusedInteractable->Implements<UMD_InteractInterface>())
 	{
 		IMD_InteractInterface::Execute_SetInteractPromptVisible(CurrentFocusedInteractable, false);
+		IMD_InteractInterface::Execute_Highlight(CurrentFocusedInteractable, false);
 	}
 
 	CurrentFocusedInteractable = nullptr;
@@ -195,4 +196,5 @@ void AMD_PlayerCharacter::UpdateInteractionFocus()
 	CurrentFocusedInteractable = HitActor;
 	UE_LOG(LogTemp, Warning, TEXT("Hit"));
 	IMD_InteractInterface::Execute_SetInteractPromptVisible(CurrentFocusedInteractable, true);
+	IMD_InteractInterface::Execute_Highlight(CurrentFocusedInteractable, true);
 }

@@ -17,10 +17,17 @@ class MORBUSDEI_API AMD_Interactable : public AActor, public IMD_InteractInterfa
 
 public:
 	AMD_Interactable();
+	virtual void BeginPlay() override;
 
 protected:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	UStaticMeshComponent* Mesh;
+	UStaticMeshComponent* Root;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* HighlightedObjects;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* ToggleableObjects;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction")
 	UWidgetComponent* InteractPromptWidget;
@@ -36,4 +43,5 @@ public:
 	virtual void Interact_Implementation(APawn* Interactor) override;
 	virtual void SetInteractPromptVisible_Implementation(bool bVisible) override;
 	virtual bool CanInteract_Implementation() const override;
+	virtual void Highlight_Implementation(bool bHighlight) override;
 };
