@@ -19,6 +19,13 @@ class MORBUSDEI_API IMD_InteractInterface
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	void Interact(APawn* Interactor);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	void SetInteractPromptVisible(bool bVisible);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	bool CanInteract() const;
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Highlight")
 	void Highlight(bool bHighlight);
 };

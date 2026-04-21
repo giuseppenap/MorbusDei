@@ -8,6 +8,7 @@
 #include "MD_Interactable.generated.h"
 
 class UStaticMeshComponent;
+class UWidgetComponent;
 
 UCLASS()
 class MORBUSDEI_API AMD_Interactable : public AActor, public IMD_InteractInterface
@@ -21,9 +22,18 @@ protected:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	UStaticMeshComponent* Mesh;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction")
+	UWidgetComponent* InteractPromptWidget;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Highlight")
 	bool bCanHighlight = true;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
+	bool bCanInteract = true;
+
+
 public:
 	virtual void Interact_Implementation(APawn* Interactor) override;
+	virtual void SetInteractPromptVisible_Implementation(bool bVisible) override;
+	virtual bool CanInteract_Implementation() const override;
 };

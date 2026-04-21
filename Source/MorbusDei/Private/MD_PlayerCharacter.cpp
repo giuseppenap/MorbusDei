@@ -62,6 +62,8 @@ void AMD_PlayerCharacter::BeginPlay()
 void AMD_PlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	UpdateInteractionFocus();
 }
 
 // Called to bind functionality to input
@@ -123,9 +125,29 @@ void AMD_PlayerCharacter::ToggleEscapeMenu()
 
 void AMD_PlayerCharacter::HandleInteract()
 {
+	if (!CurrentFocusedInteractable)
+	{
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Interacted"));
+	IMD_InteractInterface::Execute_Interact(CurrentFocusedInteractable, this);
+}
+
+void AMD_PlayerCharacter::ClearInteractionFocus()
+{
+	if (CurrentFocusedInteractable &&
+		CurrentFocusedInteractable->Implements<UMD_InteractInterface>())
+	{
+		IMD_InteractInterface::Execute_SetInteractPromptVisible(CurrentFocusedInteractable, false);
+	}
+
+	CurrentFocusedInteractable = nullptr;
+}
+
+void AMD_PlayerCharacter::UpdateInteractionFocus()
+{
 	FVector Start;
 	FRotator ViewRotation;
-
 	Controller->GetPlayerViewPoint(Start, ViewRotation);
 
 	const FVector End = Start + (ViewRotation.Vector() * InteractDistance);
@@ -142,30 +164,35 @@ void AMD_PlayerCharacter::HandleInteract()
 		Params
 	);
 
-	DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 1.0f, 0, 1.5f);
-
 	if (!bHit || !Hit.GetActor())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Interact trace hit nothing"));
+		ClearInteractionFocus();
 		return;
 	}
 
 	AActor* HitActor = Hit.GetActor();
-	UE_LOG(LogTemp, Warning, TEXT("Interact trace hit: %s"), *GetNameSafe(HitActor));
 
-	if (!HitActor)
+	if (!HitActor->Implements<UMD_InteractInterface>())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit result had no valid actor"));
+		ClearInteractionFocus();
 		return;
 	}
-	
-	if (HitActor->Implements<UMD_InteractInterface>())
+
+	const bool bCanInteract = IMD_InteractInterface::Execute_CanInteract(HitActor);
+	if (!bCanInteract)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s is interactable"), *GetNameSafe(HitActor));
-		IMD_InteractInterface::Execute_Interact(HitActor, this);
+		ClearInteractionFocus();
+		return;
 	}
-	else
+
+	if (CurrentFocusedInteractable == HitActor)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s is NOT interactable"), *GetNameSafe(HitActor));
+		return;
 	}
+
+	ClearInteractionFocus();
+
+	CurrentFocusedInteractable = HitActor;
+	UE_LOG(LogTemp, Warning, TEXT("Hit"));
+	IMD_InteractInterface::Execute_SetInteractPromptVisible(CurrentFocusedInteractable, true);
 }

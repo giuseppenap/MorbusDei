@@ -75,5 +75,10 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void ToggleEscapeMenu();
 	void HandleInteract();
+
+	UPROPERTY(EditAnywhere)
+	AActor* CurrentFocusedInteractable = nullptr;
+	void UpdateInteractionFocus();
+	void ClearInteractionFocus();
 	
 };
