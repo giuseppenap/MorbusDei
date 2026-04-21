@@ -9,6 +9,8 @@
 
 #include "Camera/CameraComponent.h"
 
+#include "MD_InteractInterface.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 AMD_PlayerCharacter::AMD_PlayerCharacter()
@@ -39,10 +41,10 @@ AMD_PlayerCharacter::AMD_PlayerCharacter()
 	SpringArmComp->CameraRotationLagSpeed = 12.f;
 
 	
-	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
-	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
-	CameraComp->bUsePawnControlRotation = false;
-	CameraComp->FieldOfView = 66.f;
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
+	CameraComponent->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
+	CameraComponent->bUsePawnControlRotation = false;
+	CameraComponent->FieldOfView = 66.f;
 }
 
 // Called when the game starts or when spawned
@@ -60,6 +62,8 @@ void AMD_PlayerCharacter::BeginPlay()
 void AMD_PlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	UpdateInteractionFocus();
 }
 
 // Called to bind functionality to input
@@ -71,6 +75,7 @@ void AMD_PlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 	EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMD_PlayerCharacter::Move);
 	EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMD_PlayerCharacter::Look);
 	EnhancedInput->BindAction(MenuAction, ETriggerEvent::Started, this, &AMD_PlayerCharacter::ToggleEscapeMenu);
+	EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &AMD_PlayerCharacter::HandleInteract);
 }
 
 void AMD_PlayerCharacter::Move(const FInputActionValue& Value)
@@ -116,4 +121,80 @@ void AMD_PlayerCharacter::ToggleEscapeMenu()
 		PC->SetInputMode(InputMode);
 		PC->bShowMouseCursor = true;
 	}
+}
+
+void AMD_PlayerCharacter::HandleInteract()
+{
+	if (!CurrentFocusedInteractable)
+	{
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Interacted"));
+	IMD_InteractInterface::Execute_Interact(CurrentFocusedInteractable, this);
+}
+
+void AMD_PlayerCharacter::ClearInteractionFocus()
+{
+	if (CurrentFocusedInteractable &&
+		CurrentFocusedInteractable->Implements<UMD_InteractInterface>())
+	{
+		IMD_InteractInterface::Execute_SetInteractPromptVisible(CurrentFocusedInteractable, false);
+		IMD_InteractInterface::Execute_Highlight(CurrentFocusedInteractable, false);
+	}
+
+	CurrentFocusedInteractable = nullptr;
+}
+
+void AMD_PlayerCharacter::UpdateInteractionFocus()
+{
+	FVector Start;
+	FRotator ViewRotation;
+	Controller->GetPlayerViewPoint(Start, ViewRotation);
+
+	const FVector End = Start + (ViewRotation.Vector() * InteractDistance);
+
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	const bool bHit = GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		Start,
+		End,
+		ECC_Visibility,
+		Params
+	);
+
+	if (!bHit || !Hit.GetActor())
+	{
+		ClearInteractionFocus();
+		return;
+	}
+
+	AActor* HitActor = Hit.GetActor();
+
+	if (!HitActor->Implements<UMD_InteractInterface>())
+	{
+		ClearInteractionFocus();
+		return;
+	}
+
+	const bool bCanInteract = IMD_InteractInterface::Execute_CanInteract(HitActor);
+	if (!bCanInteract)
+	{
+		ClearInteractionFocus();
+		return;
+	}
+
+	if (CurrentFocusedInteractable == HitActor)
+	{
+		return;
+	}
+
+	ClearInteractionFocus();
+
+	CurrentFocusedInteractable = HitActor;
+	UE_LOG(LogTemp, Warning, TEXT("Hit"));
+	IMD_InteractInterface::Execute_SetInteractPromptVisible(CurrentFocusedInteractable, true);
+	IMD_InteractInterface::Execute_Highlight(CurrentFocusedInteractable, true);
 }
